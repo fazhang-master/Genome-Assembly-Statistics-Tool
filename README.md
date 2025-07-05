@@ -6,6 +6,9 @@
 ## 安装依赖
 ```bash
 sudo apt install gawk # 必需依赖
+gawk --version
+# GNU Awk 5.1.0, API: 3.0 (GNU MPFR 4.1.0, GNU MP 6.2.1)
+# Copyright (C) 1989, 1991-2020 Free Software Foundation.
 ```
 
 ## 使用方式
