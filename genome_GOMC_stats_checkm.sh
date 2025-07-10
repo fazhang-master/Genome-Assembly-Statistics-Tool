@@ -53,7 +53,7 @@ mkdir -p "$output_dir"
 # ==== Load CheckM data ====
 declare -A checkm_data
 echo "Loading CheckM quality data from: $checkm_file"
-while IFS=$'\t' read -r bin_id completeness contamination _; do
+while IFS=$'\t' read -r bin_id _ _ _ completeness contamination _; do
     # Skip header lines
     [[ "$bin_id" == "Bin Id" || "$completeness" == "Completeness" ]] && continue
     
