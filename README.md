@@ -112,7 +112,7 @@ direct_file.fa,b2960bdf4ec93e4089be887dbeffaac4,2184416,500,36272,1503,5386,123
 2. 计算原始文件的MD5校验值
 3. 使用CheckM评估基因组的完整度(completeness)和污染度(contamination)
 4. 计算质量分数(QS = completeness - 5×contamination)
-5. 根据MIMAG标准对基因组质量进行分类[1](@ref)
+5. 根据MIMAG标准对基因组质量进行分类
 6. 生成包含所有统计指标的CSV报告
 
 ## 功能特点
