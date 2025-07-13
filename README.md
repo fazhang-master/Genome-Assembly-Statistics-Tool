@@ -1,9 +1,11 @@
 # 基因组组装统计工具
 
 ## 概述
+
 该脚本用于计算FASTA文件(.fa/.fa.gz)的基因组统计信息，包括文件大小、序列数量、N50等关键指标。支持两种文件组织方式并自动检测目录结构。
 
 ## 安装依赖
+
 ```bash
 sudo apt install gawk # 必需依赖
 ```
@@ -108,6 +110,7 @@ direct_file.fa,b2960bdf4ec93e4089be887dbeffaac4,2184416,500,36272,1503,5386,123
 ## 概述
 
 该工具自动化执行以下流程：
+
 1. 扫描输入目录中的基因组文件（支持FASTA格式，包括压缩文件）
 2. 计算原始文件的MD5校验值
 3. 使用CheckM评估基因组的完整度(completeness)和污染度(contamination)
@@ -116,6 +119,7 @@ direct_file.fa,b2960bdf4ec93e4089be887dbeffaac4,2184416,500,36272,1503,5386,123
 6. 生成包含所有统计指标的CSV报告
 
 ## 功能特点
+
 - 支持扁平结构和嵌套结构目录
 - 自动检测目录结构类型（auto模式）
 - 保留原始文件完整性（通过文件复制处理）
@@ -125,6 +129,7 @@ direct_file.fa,b2960bdf4ec93e4089be887dbeffaac4,2184416,500,36272,1503,5386,123
 ## 安装要求
 
 ### 系统依赖
+
 - Python 3.9
 - CheckM v1.2.3 ([安装指南](https://pypi.org/project/checkm-genome/))
 - CheckM数据库 ([数据下载](https://data.ace.uq.edu.au/public/CheckM_databases/checkm_data_2015_01_16.tar.gz))
@@ -132,6 +137,7 @@ direct_file.fa,b2960bdf4ec93e4089be887dbeffaac4,2184416,500,36272,1503,5386,123
 - pplacer 1.1.alpha19 ([安装指南](https://anaconda.org/bioconda/pplacer))  
 
 ### 安装CheckM
+
 ```bash
 # 创建conda环境
 conda create -n GenomicQS python=3.9
@@ -139,6 +145,7 @@ conda activate GenomicQS
 
 # 安装CheckM及其依赖
 conda install pandas==2.3.1
+conda install prodigal==2.6.3 
 pip install checkm-genome==1.2.3
 conda install bioconda::hmmer==3.4
 conda install bioconda::pplacer==1.1.alpha19
@@ -174,6 +181,7 @@ python Genomic_QS.py -i <input_dir> -o <output.csv> [-t STRUCTURE_TYPE]
 |  `-x`, `--extension`  |            基因组文件扩展名            |       `fa`        |
 |   `-j`, `--threads`   |         CheckM使用的CPU线程数          |   系统CPU核心数   |
 |  `-k`, `--keep-temp`  |              保留临时文件              |       False       |
+| `-n`, `--batch-size`  |    每批次处理的数量(0=一次处理所有)    |        `0`        |
 |    `-h`, `--help`     |              显示帮助信息              |                   |
 
 ### 目录结构示例
@@ -246,3 +254,4 @@ fasta_file_name,fasta_file_md5,completeness(%),contamination(%),QS,quality_class
 Sample1_bin1.fa,4262639e5730dd421297675550c8e174,97.21,1.67,88.86,near-complete
 Sample1_bin2.fa,b2960bdf4ec93e4089be887dbeffaac4,92.96,2.85,78.71,high-quality
 Sample2_bin1.fa,cfc07118448e1e1bcc6f475a19bb9fb3,16.61,1.72,7.81,low-quality
+```
