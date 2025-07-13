@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
 Genome Quality Assessment Tool
-Version: 1.1.4
+Version: 1.1.5
 Author: FaZhang
 Date: 2025-07-13
-Added batch processing feature (-n parameter)
+修复嵌套结构文件名前缀问题
 """
 import os
 import sys
@@ -37,9 +37,8 @@ def parse_arguments():
                         help="Genome file extension for CheckM to recognize (default: fa)")
     parser.add_argument("-j", "--threads", type=int, default=os.cpu_count(),
                         help="Number of CPU threads for CheckM")
-    parser.add_argument("-k", "--keep-temp", action="store_true",
+    parser.add_argument("-k", "--keep-temp", default="False", action="store_true",
                         help="Keep temporary files after execution")
-    # 新增的批次处理参数
     parser.add_argument("-n", "--batch-size", type=int, default=0,
                         help="Number of files to process per batch (0=process all at once)")
     return parser.parse_args()
@@ -78,6 +77,9 @@ def run_checkm(input_dir, output_dir, checkm_db, threads, extension):
     # 通过环境变量设置数据库路径
     env = os.environ.copy()
     env["CHECKM_DATA_PATH"] = checkm_db
+    
+    # 确保HMMER可执行文件在PATH中
+    env["PATH"] = os.path.dirname(shutil.which("hmmsearch")) + ":" + env["PATH"]
     
     lineage_cmd = [
         "checkm", "lineage_wf",
@@ -176,7 +178,7 @@ def parse_checkm_results(result_file):
     
     return results
 
-def process_batch(genomes_batch, batch_idx, temp_dir, args):
+def process_batch(genomes_batch, batch_idx, temp_dir, args, dir_structure):
     """Process a batch of genomes"""
     # 创建当前批次的临时目录
     batch_genome_dir = os.path.join(temp_dir, f"genomes_batch_{batch_idx}")
@@ -184,14 +186,23 @@ def process_batch(genomes_batch, batch_idx, temp_dir, args):
     
     batch_results = []
     for genome in genomes_batch:
-        # 复制文件到批次目录
-        temp_path = os.path.join(batch_genome_dir, os.path.basename(genome["src_path"]))
+        # 关键修改：根据目录结构生成新文件名
+        if dir_structure == "nested":
+            # 使用文件夹名_文件名格式
+            new_file_name = f"{genome['parent_dir']}_{os.path.basename(genome['src_path'])}"
+        else:
+            new_file_name = os.path.basename(genome['src_path'])
+        
+        temp_path = os.path.join(batch_genome_dir, new_file_name)
         try:
             shutil.copy2(genome["src_path"], temp_path)
             print(f"复制批次 {batch_idx}: {genome['src_path']} → {temp_path}")
         except Exception as e:
             print(f"复制错误: {e}")
             continue
+        
+        # 保存带前缀的文件名用于后续结果关联
+        genome["prefixed_name"] = new_file_name
     
     # 运行CheckM分析
     checkm_output = os.path.join(temp_dir, f"checkm_output_batch_{batch_idx}")
@@ -203,7 +214,8 @@ def process_batch(genomes_batch, batch_idx, temp_dir, args):
     
     # 准备当前批次结果
     for genome in genomes_batch:
-        base_name = os.path.splitext(os.path.basename(genome["src_path"]))[0]
+        # 使用带前缀的文件名（去掉扩展名）作为匹配键
+        base_name = os.path.splitext(genome["prefixed_name"])[0]
         
         if base_name in checkm_results:
             completeness, contamination = checkm_results[base_name]
@@ -213,7 +225,7 @@ def process_batch(genomes_batch, batch_idx, temp_dir, args):
         
         batch_results.append(OrderedDict([
             ("batch", batch_idx),
-            ("fasta_file_name", os.path.basename(genome["src_path"])),
+            ("fasta_file_name", genome["prefixed_name"]),  # 使用带前缀的文件名
             ("fasta_file_md5", genome["md5"]),
             ("completeness(%)", completeness),
             ("contamination(%)", contamination),
@@ -261,7 +273,8 @@ def process_genomes(args):
                 continue
             all_genomes.append({
                 "src_path": file_path,
-                "md5": calculate_md5(file_path)
+                "md5": calculate_md5(file_path),
+                "parent_dir": None  # 扁平结构没有父目录
             })
             found_files += 1
     
@@ -280,7 +293,8 @@ def process_genomes(args):
                     continue
                 all_genomes.append({
                     "src_path": file_path,
-                    "md5": calculate_md5(file_path)
+                    "md5": calculate_md5(file_path),
+                    "parent_dir": sample_dir  # 记录父目录名
                 })
                 found_files += 1
     
@@ -301,7 +315,7 @@ def process_genomes(args):
     
     if batch_size == len(all_genomes):
         print(f"一次性处理所有 {len(all_genomes)} 个文件")
-        batch_output = process_batch(all_genomes, 0, temp_dir, args)
+        batch_output = process_batch(all_genomes, 0, temp_dir, args, dir_structure)
         batch_results_files.append(batch_output)
     else:
         print(f"将 {len(all_genomes)} 个文件分成 {len(all_genomes)//batch_size + 1} 批次，每批 {batch_size} 个")
@@ -312,7 +326,7 @@ def process_genomes(args):
             genomes_batch = all_genomes[i:batch_end]
             
             print(f"\n=== 开始处理批次 {batch_idx} ({len(genomes_batch)} 个文件) ===")
-            batch_output = process_batch(genomes_batch, batch_idx, temp_dir, args)
+            batch_output = process_batch(genomes_batch, batch_idx, temp_dir, args, dir_structure)
             batch_results_files.append(batch_output)
     
     # 合并所有批次结果
