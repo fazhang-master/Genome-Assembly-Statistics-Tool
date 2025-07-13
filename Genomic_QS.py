@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
 Genome Quality Assessment Tool
-Version: 1.1.3
+Version: 1.1.4
 Author: FaZhang
-Date: 2025-07-10
+Date: 2025-07-13
+Added batch processing feature (-n parameter)
 """
 import os
 import sys
@@ -15,6 +16,7 @@ import shutil
 import csv
 import glob
 from collections import OrderedDict
+import pandas as pd
 
 def parse_arguments():
     """Parse command-line arguments"""
@@ -37,6 +39,9 @@ def parse_arguments():
                         help="Number of CPU threads for CheckM")
     parser.add_argument("-k", "--keep-temp", action="store_true",
                         help="Keep temporary files after execution")
+    # 新增的批次处理参数
+    parser.add_argument("-n", "--batch-size", type=int, default=0,
+                        help="Number of files to process per batch (0=process all at once)")
     return parser.parse_args()
 
 def detect_structure(input_dir, structure_type):
@@ -171,6 +176,61 @@ def parse_checkm_results(result_file):
     
     return results
 
+def process_batch(genomes_batch, batch_idx, temp_dir, args):
+    """Process a batch of genomes"""
+    # 创建当前批次的临时目录
+    batch_genome_dir = os.path.join(temp_dir, f"genomes_batch_{batch_idx}")
+    os.makedirs(batch_genome_dir, exist_ok=True)
+    
+    batch_results = []
+    for genome in genomes_batch:
+        # 复制文件到批次目录
+        temp_path = os.path.join(batch_genome_dir, os.path.basename(genome["src_path"]))
+        try:
+            shutil.copy2(genome["src_path"], temp_path)
+            print(f"复制批次 {batch_idx}: {genome['src_path']} → {temp_path}")
+        except Exception as e:
+            print(f"复制错误: {e}")
+            continue
+    
+    # 运行CheckM分析
+    checkm_output = os.path.join(temp_dir, f"checkm_output_batch_{batch_idx}")
+    os.makedirs(checkm_output, exist_ok=True)
+    result_file = run_checkm(batch_genome_dir, checkm_output, args.checkm_data, args.threads, args.extension)
+    
+    # 解析CheckM结果
+    checkm_results = parse_checkm_results(result_file)
+    
+    # 准备当前批次结果
+    for genome in genomes_batch:
+        base_name = os.path.splitext(os.path.basename(genome["src_path"]))[0]
+        
+        if base_name in checkm_results:
+            completeness, contamination = checkm_results[base_name]
+            quality_class, qs = classify_quality(completeness, contamination)
+        else:
+            completeness, contamination, quality_class, qs = "NA", "NA", "NA", "NA"
+        
+        batch_results.append(OrderedDict([
+            ("batch", batch_idx),
+            ("fasta_file_name", os.path.basename(genome["src_path"])),
+            ("fasta_file_md5", genome["md5"]),
+            ("completeness(%)", completeness),
+            ("contamination(%)", contamination),
+            ("QS", qs),
+            ("quality_class", quality_class)
+        ]))
+    
+    # 保存当前批次结果到临时文件
+    batch_output = os.path.join(temp_dir, f"batch_{batch_idx}_results.csv")
+    with open(batch_output, "w") as out_fh:
+        writer = csv.DictWriter(out_fh, fieldnames=batch_results[0].keys())
+        writer.writeheader()
+        writer.writerows(batch_results)
+    
+    print(f"批次 {batch_idx} 完成，处理了 {len(genomes_batch)} 个基因组")
+    return batch_output
+
 def process_genomes(args):
     """Main processing workflow"""
     # 验证数据库路径
@@ -186,10 +246,9 @@ def process_genomes(args):
     genome_dir = os.path.join(temp_dir, "genomes")
     os.makedirs(genome_dir, exist_ok=True)
     
-    # 收集基因组文件 - 使用文件复制代替符号链接
+    # 收集所有基因组文件
     print(f"使用文件扩展名: {args.extension}")
-    genomes = []
-    file_counter = 1
+    all_genomes = []
     found_files = 0
     
     if dir_structure == "flat":
@@ -200,31 +259,10 @@ def process_genomes(args):
         for file_path in files:
             if not os.path.isfile(file_path):
                 continue
-            file_name = os.path.basename(file_path)
-            bin_id = f"GENOME_{file_counter:04d}"
-            temp_path = os.path.join(genome_dir, file_name)
-            
-            # 复制文件而不是符号链接
-            try:
-                shutil.copy2(file_path, temp_path)
-                print(f"复制: {file_path} → {temp_path}")
-                # 验证文件大小
-                src_size = os.path.getsize(file_path)
-                dest_size = os.path.getsize(temp_path)
-                if src_size != dest_size:
-                    print(f"警告: 文件大小不匹配! 源: {src_size}字节, 目标: {dest_size}字节")
-            except Exception as e:
-                print(f"复制错误: {e}")
-                continue
-            
-            genomes.append({
+            all_genomes.append({
                 "src_path": file_path,
-                "temp_path": temp_path,
-                "bin_id": bin_id,
-                "fasta_name": file_name,
                 "md5": calculate_md5(file_path)
             })
-            file_counter += 1
             found_files += 1
     
     else:  # 嵌套结构
@@ -240,31 +278,10 @@ def process_genomes(args):
             for file_path in files:
                 if not os.path.isfile(file_path):
                     continue
-                file_name = f"{sample_dir}_{os.path.basename(file_path)}"
-                bin_id = f"GENOME_{file_counter:04d}"
-                temp_path = os.path.join(genome_dir, file_name)
-                
-                # 复制文件而不是符号链接
-                try:
-                    shutil.copy2(file_path, temp_path)
-                    print(f"复制: {file_path} → {temp_path}")
-                    # 验证文件大小
-                    src_size = os.path.getsize(file_path)
-                    dest_size = os.path.getsize(temp_path)
-                    if src_size != dest_size:
-                        print(f"警告: 文件大小不匹配! 源: {src_size}字节, 目标: {dest_size}字节")
-                except Exception as e:
-                    print(f"复制错误: {e}")
-                    continue
-                
-                genomes.append({
+                all_genomes.append({
                     "src_path": file_path,
-                    "temp_path": temp_path,
-                    "bin_id": bin_id,
-                    "fasta_name": file_name,
                     "md5": calculate_md5(file_path)
                 })
-                file_counter += 1
                 found_files += 1
     
     if found_files == 0:
@@ -276,57 +293,64 @@ def process_genomes(args):
             "2. 确认文件格式正确 (FASTA格式)"
         )
     
-    print(f"共复制 {len(genomes)} 个基因组文件")
+    print(f"共找到 {len(all_genomes)} 个基因组文件")
     
-    # 运行CheckM分析 - 使用命令行指定的扩展名
-    checkm_output = os.path.join(temp_dir, "checkm_output")
-    os.makedirs(checkm_output, exist_ok=True)
-    result_file = run_checkm(genome_dir, checkm_output, args.checkm_data, args.threads, args.extension)
+    # 批次处理逻辑
+    batch_results_files = []
+    batch_size = args.batch_size if args.batch_size > 0 else len(all_genomes)
     
-    # 解析CheckM结果
-    checkm_results = parse_checkm_results(result_file)
+    if batch_size == len(all_genomes):
+        print(f"一次性处理所有 {len(all_genomes)} 个文件")
+        batch_output = process_batch(all_genomes, 0, temp_dir, args)
+        batch_results_files.append(batch_output)
+    else:
+        print(f"将 {len(all_genomes)} 个文件分成 {len(all_genomes)//batch_size + 1} 批次，每批 {batch_size} 个")
+        
+        for i in range(0, len(all_genomes), batch_size):
+            batch_idx = i // batch_size + 1
+            batch_end = min(i + batch_size, len(all_genomes))
+            genomes_batch = all_genomes[i:batch_end]
+            
+            print(f"\n=== 开始处理批次 {batch_idx} ({len(genomes_batch)} 个文件) ===")
+            batch_output = process_batch(genomes_batch, batch_idx, temp_dir, args)
+            batch_results_files.append(batch_output)
     
-    # 准备最终结果
+    # 合并所有批次结果
     final_results = []
-    for genome in genomes:
-        # 从文件名中去掉扩展名作为bin_id
-        base_name = os.path.splitext(os.path.basename(genome["temp_path"]))[0]
+    for batch_file in batch_results_files:
+        try:
+            # 使用pandas合并CSV文件更高效
+            df = pd.read_csv(batch_file)
+            final_results.append(df)
+        except Exception as e:
+            print(f"加载批次结果文件 {batch_file} 时出错: {e}")
+    
+    if final_results:
+        # 使用pandas合并所有批次
+        final_df = pd.concat(final_results, ignore_index=True)
         
-        if base_name in checkm_results:
-            completeness, contamination = checkm_results[base_name]
-            quality_class, qs = classify_quality(completeness, contamination)
-        else:
-            completeness, contamination, quality_class, qs = "NA", "NA", "NA", "NA"
+        # 删除批次列（如果不需要）
+        if "batch" in final_df.columns:
+            final_df = final_df.drop(columns=["batch"])
         
-        final_results.append(OrderedDict([
-            ("fasta_file_name", genome["fasta_name"]),
-            ("fasta_file_md5", genome["md5"]),
-            ("completeness(%)", completeness),
-            ("contamination(%)", contamination),
-            ("QS", qs),
-            ("quality_class", quality_class)
-        ]))
-
-    output_dir = os.path.dirname(args.output) or '.'  # 空路径默认为当前目录
-    os.makedirs(output_dir, exist_ok=True)  # 安全创建目录
-    
-    # 添加路径验证
-    if not os.access(output_dir, os.W_OK):
-        raise PermissionError(f"输出目录不可写: {output_dir}")
-    
-    print(f"最终输出路径: {os.path.abspath(args.output)}")
-    
-    # 写入文件
-    with open(args.output, "w") as out_fh:
-        writer = csv.DictWriter(out_fh, fieldnames=final_results[0].keys())
-        writer.writeheader()
-        writer.writerows(final_results)
+        # 保存最终结果
+        output_dir = os.path.dirname(args.output) or '.' 
+        os.makedirs(output_dir, exist_ok=True)
+        
+        if not os.access(output_dir, os.W_OK):
+            raise PermissionError(f"输出目录不可写: {output_dir}")
+        
+        # 使用pandas保存为CSV
+        final_df.to_csv(args.output, index=False)
+        print(f"合并结果保存至: {os.path.abspath(args.output)}")
+    else:
+        print("警告: 没有生成有效结果")
     
     # 清理临时文件
     if not args.keep_temp:
         shutil.rmtree(temp_dir)
     
-    return final_results
+    return final_df.to_dict("records") if not final_df.empty else []
 
 def main():
     try:
