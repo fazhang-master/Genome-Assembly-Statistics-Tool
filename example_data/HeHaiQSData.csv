@@ -1,0 +1,3 @@
+fasta_file_name,fasta_file_md5,completeness(%),contamination(%),QS,quality_class
+Sum_BS_BHB1_bin.10.fa,4262639e5730dd421297675550c8e174,86,32.85,-78.25,low-quality
+Sum_BS_BHB1_bin.11.fa,b2960bdf4ec93e4089be887dbeffaac4,78.4,16.93,-6.25,low-quality
