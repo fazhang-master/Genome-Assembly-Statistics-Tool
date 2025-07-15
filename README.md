@@ -353,8 +353,6 @@ JOIN QualityScores q ON b.fasta_file_md5 = q.fasta_file_md5
 LIMIT 10;
 ```
 
-------
-
 ### 技术实现要点
 
 1. **批量插入优化**：
