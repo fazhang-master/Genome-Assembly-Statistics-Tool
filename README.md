@@ -136,7 +136,7 @@ direct_file.fa,b2960bdf4ec93e4089be887dbeffaac4,2184416,500,36272,1503,5386,123
 - hmmer 3.4 ([安装指南](https://anaconda.org/bioconda/hmmer))
 - pplacer 1.1.alpha19 ([安装指南](https://anaconda.org/bioconda/pplacer))  
 
-### 安装CheckM
+### 依赖安装
 
 ```bash
 # 创建conda环境
@@ -255,3 +255,134 @@ Sample1_bin1.fa,4262639e5730dd421297675550c8e174,97.21,1.67,88.86,near-complete
 Sample1_bin2.fa,b2960bdf4ec93e4089be887dbeffaac4,92.96,2.85,78.71,high-quality
 Sample2_bin1.fa,cfc07118448e1e1bcc6f475a19bb9fb3,16.61,1.72,7.81,low-quality
 ```
+
+# 基因统计数据处理工具
+
+## 概述
+
+该脚本用于将***基因组组装统计工具***生成的**BasicData**和***基因组质量检测工具***生成的**SupplyData**通过外键的形式存入mysql数据库，方便后续分析。
+
+## 功能特点
+
+- Python脚本：处理命令行参数、读取CSV、创建MySQL表结构并导入数据
+- 配置文件：存储数据库连接信息
+- 外键关联：通过`fasta_file_md5`字段连接基础表和扩增表
+- 唯一约束：确保`fasta_file_name`和`fasta_file_md5`的唯一性
+
+## 安装要求
+
+### 系统依赖
+
+- Python 3.9
+- MySql v8.4.5 LTS ([安装指南](https://dev.mysql.com/downloads/mysql/))
+
+### 安装mysql并创建数据库
+
+```sql
+CREATE DATABASE IF NOT EXISTS xxx(数据库名字) DEFAULT CHARSET utf8 COLLATE utf8_general_ci;
+```
+
+### 依赖安装
+
+```bash
+# 激活conda环境
+conda activate GenomicQS
+
+# 安装CheckM及其依赖
+pip install mysql-connector-python==9.3.0
+pip install configparser==7.2.0
+```
+
+### 配置文件格式
+
+`db_config.ini`
+
+```ini
+[database]
+host = localhost
+user = your_username
+password = your_password
+database = your_database
+```
+
+### 参数说明
+
+|         参数         |  缩写  | 必填 |                             说明                             |
+| :------------------: | :----: | :--: | :----------------------------------------------------------: |
+|    `--basicdata`     | `-bd`  |  是  |                     基础数据CSV文件路径                      |
+|    `--supplydata`    | `-sd`  |  是  |                     扩增数据CSV文件路径                      |
+|    `--uniquekey`     | `-uk`  |  否  | 唯一键字段（`fasta_file_name`或`fasta_file_md5`），默认`fasta_file_md5` |
+| `--outputbasicdata`  | `-obd` |  是  |                         基础数据表名                         |
+| `--outputsupplydata` | `-osd` |  是  |                         扩增数据表名                         |
+|      `--config`      |  `-c`  |  否  |           数据库配置文件路径，默认`db_config.ini`            |
+
+### 使用示例
+
+```python
+python CSVtoSQL.py \
+  -bd HeHaiBasicData.csv \
+  -sd HeHaiQSData.csv \
+  -uk fasta_file_md5 \
+  -obd BasicGenomes \
+  -osd QualityScores \
+  -c db_config.ini
+```
+
+### 数据库结构说明
+
+1. **基础表**（`BasicGenomes`）:
+   - 存储基因组基本信息
+   - `fasta_file_md5` 作为主键
+   - `fasta_file_name` 和 `fasta_file_md5` 均设置唯一约束
+2. **扩增表**（`QualityScores`）:
+   - 存储质量评估数据
+   - 通过外键 `fasta_file_md5` 关联基础表
+   - 自动生成自增主键 `id`
+   - 设置级联删除（删除基础表记录时自动删除关联数据）
+
+### 数据验证方法
+
+```sql
+-- 检查基础表数据
+SELECT * FROM BasicGenomes LIMIT 5;
+
+-- 检查外键关联
+SELECT b.fasta_file_name, q.completeness, q.contamination 
+FROM BasicGenomes b
+JOIN QualityScores q ON b.fasta_file_md5 = q.fasta_file_md5
+LIMIT 10;
+```
+
+------
+
+### 技术实现要点
+
+1. **批量插入优化**：
+
+   - 使用`executemany()`分批处理（默认500条/批）
+
+   - ```
+     INSERT IGNORE
+     ```
+
+     跳过重复记录
+
+2. **外键约束**：
+
+   - 通过`fasta_file_md5`字段建立主表-从表关系
+   - 级联删除确保数据完整性
+
+3. **错误处理**：
+
+   - 自动回滚事务保证失败时数据一致性
+   - 详细的错误日志输出
+
+4. **唯一性保证**：
+
+   - 双唯一约束（`fasta_file_name` + `fasta_file_md5`）
+   - 主键使用用户指定的唯一键字段
+
+5. **数据验证**：
+
+   - 导入前自动检查CSV文件路径
+   - 数据库操作后显式提交事务
