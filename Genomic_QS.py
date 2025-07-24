@@ -256,7 +256,7 @@ def process_genomes(args):
     # 检测目录结构
     dir_structure = detect_structure(args.input, args.type)
     
-    # 创建临时工作空间（使用自定义临时根目录）[1,4](@ref)
+    # 创建临时工作空间（使用自定义临时根目录）
     print(f"使用临时文件根目录: {args.custom_temp_root}")
     os.makedirs(args.custom_temp_root, exist_ok=True)  # 确保目录存在
     temp_dir = tempfile.mkdtemp(prefix="genomic_qs_", dir=args.custom_temp_root)
