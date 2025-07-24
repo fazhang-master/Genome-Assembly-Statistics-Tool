@@ -144,11 +144,11 @@ conda create -n GenomicQS python=3.9
 conda activate GenomicQS
 
 # 安装CheckM及其依赖
-conda install pandas==2.3.1
 conda install prodigal==2.6.3 
 pip install checkm-genome==1.2.3
 conda install bioconda::hmmer==3.4
 conda install bioconda::pplacer==1.1.alpha19
+conda install pandas==2.1.3 numpy=1.26.4
 ```
 
 ### 下载CheckM数据库
