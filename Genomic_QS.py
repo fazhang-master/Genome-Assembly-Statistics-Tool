@@ -354,7 +354,7 @@ def process_genomes(args):
             
         except Exception as e:
             print(f"加载 {batch_file} 失败: {str(e)}")
-            print("尝试使用替代方法加载...")
+            print("尝试使用替代方法1加载...")
             
             # 方法1：尝试指定dtype为object
             try:
@@ -363,22 +363,23 @@ def process_genomes(args):
                 final_results.append(df)
             except Exception as e2:
                 print(f"替代方法1失败: {str(e2)}")
+                print("尝试使用替代方法2加载...")
                 
-            # 方法2：尝试手动解析
-            try:
-                with open(batch_file, 'r') as f:
-                    lines = f.readlines()
-                
-                # 查找数据起始行
-                header = lines[0].strip().split(',')
-                data = [line.strip().split(',') for line in lines[1:]]
-                
-                # 转换为DataFrame
-                df = pd.DataFrame(data, columns=header)
-                print(f"手动解析成功: {batch_file}")
-                final_results.append(df)
-            except Exception as e3:
-                print(f"替代方法2失败: {str(e3)}")
+                # 方法2：尝试手动解析
+                try:
+                    with open(batch_file, 'r') as f:
+                        lines = f.readlines()
+                    
+                    # 查找数据起始行
+                    header = lines[0].strip().split(',')
+                    data = [line.strip().split(',') for line in lines[1:]]
+                    
+                    # 转换为DataFrame
+                    df = pd.DataFrame(data, columns=header)
+                    print(f"手动解析成功: {batch_file}")
+                    final_results.append(df)
+                except Exception as e3:
+                    print(f"替代方法2失败: {str(e3)}")
     
     if final_results:
         # 使用pandas合并所有批次
