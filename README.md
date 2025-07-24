@@ -182,6 +182,7 @@ python Genomic_QS.py -i <input_dir> -o <output.csv> [-t STRUCTURE_TYPE]
 |   `-j`, `--threads`   |         CheckM使用的CPU线程数          |   系统CPU核心数   |
 |  `-k`, `--keep-temp`  |              保留临时文件              |       False       |
 | `-n`, `--batch-size`  |    每批次处理的数量(0=一次处理所有)    |        `0`        |
+| `-r`, `--custom-temp-root`  |    临时文件根目录    |        `/tmp`        |
 |    `-h`, `--help`     |              显示帮助信息              |                   |
 
 ### 目录结构示例
