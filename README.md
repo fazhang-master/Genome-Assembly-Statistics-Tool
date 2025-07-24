@@ -130,7 +130,7 @@ direct_file.fa,b2960bdf4ec93e4089be887dbeffaac4,2184416,500,36272,1503,5386,123
 
 ### 系统依赖
 
-- Python 3.9
+- Python 3.12
 - CheckM v1.2.3 ([安装指南](https://pypi.org/project/checkm-genome/))
 - CheckM数据库 ([数据下载](https://data.ace.uq.edu.au/public/CheckM_databases/checkm_data_2015_01_16.tar.gz))
 - hmmer 3.4 ([安装指南](https://anaconda.org/bioconda/hmmer))
@@ -140,15 +140,15 @@ direct_file.fa,b2960bdf4ec93e4089be887dbeffaac4,2184416,500,36272,1503,5386,123
 
 ```bash
 # 创建conda环境
-conda create -n GenomicQS python=3.9
+conda create -n GenomicQS python=3.12
 conda activate GenomicQS
 
 # 安装CheckM及其依赖
+conda install pandas==2.1.3
 conda install prodigal==2.6.3 
 pip install checkm-genome==1.2.3
 conda install bioconda::hmmer==3.4
 conda install bioconda::pplacer==1.1.alpha19
-conda install pandas==2.1.3 numpy=1.26.4
 ```
 
 ### 下载CheckM数据库
