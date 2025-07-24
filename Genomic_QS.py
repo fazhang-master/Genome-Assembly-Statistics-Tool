@@ -256,7 +256,7 @@ def process_genomes(args):
     # 检测目录结构
     dir_structure = detect_structure(args.input, args.type)
     
-    # 创建临时工作空间（使用自定义临时根目录）
+    # 创建临时工作空间（使用自定义临时根目录）[1,4](@ref)
     print(f"使用临时文件根目录: {args.custom_temp_root}")
     os.makedirs(args.custom_temp_root, exist_ok=True)  # 确保目录存在
     temp_dir = tempfile.mkdtemp(prefix="genomic_qs_", dir=args.custom_temp_root)
@@ -339,11 +339,46 @@ def process_genomes(args):
     final_results = []
     for batch_file in batch_results_files:
         try:
-            # 使用pandas合并CSV文件更高效
+            print(f"正在加载: {batch_file}")
+            
+            # 调试：检查文件内容前10行
+            with open(batch_file, 'r') as f:
+                head = [next(f) for _ in range(5)]
+            print("文件前5行内容:")
+            print(''.join(head))
+            
+            # 尝试加载CSV文件
             df = pd.read_csv(batch_file)
+            print(f"成功加载: {batch_file} (形状: {df.shape})")
             final_results.append(df)
+            
         except Exception as e:
-            print(f"加载批次结果文件 {batch_file} 时出错: {e}")
+            print(f"加载 {batch_file} 失败: {str(e)}")
+            print("尝试使用替代方法加载...")
+            
+            # 方法1：尝试指定dtype为object
+            try:
+                df = pd.read_csv(batch_file, dtype='object')
+                print(f"使用dtype='object'成功加载: {batch_file}")
+                final_results.append(df)
+            except Exception as e2:
+                print(f"替代方法1失败: {str(e2)}")
+                
+            # 方法2：尝试手动解析
+            try:
+                with open(batch_file, 'r') as f:
+                    lines = f.readlines()
+                
+                # 查找数据起始行
+                header = lines[0].strip().split(',')
+                data = [line.strip().split(',') for line in lines[1:]]
+                
+                # 转换为DataFrame
+                df = pd.DataFrame(data, columns=header)
+                print(f"手动解析成功: {batch_file}")
+                final_results.append(df)
+            except Exception as e3:
+                print(f"替代方法2失败: {str(e3)}")
     
     if final_results:
         # 使用pandas合并所有批次
