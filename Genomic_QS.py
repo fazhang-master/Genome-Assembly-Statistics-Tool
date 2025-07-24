@@ -1,10 +1,11 @@
-#!/usr/bin/env python3
 """
 Genome Quality Assessment Tool
-Version: 1.1.5
+Version: 1.1.6
 Author: FaZhang
-Date: 2025-07-13
-修复嵌套结构文件名前缀问题
+Date: 2025-07-24
+更新内容：
+1. 新增 --custom-temp-root 参数，允许指定临时文件根目录
+2. 修复嵌套结构文件名前缀问题
 """
 import os
 import sys
@@ -41,6 +42,8 @@ def parse_arguments():
                         help="Keep temporary files after execution")
     parser.add_argument("-n", "--batch-size", type=int, default=0,
                         help="Number of files to process per batch (0=process all at once)")
+    parser.add_argument("-r", "--custom-temp-root", default="/tmp",
+                        help="Custom root directory for temporary files (default: /tmp)")
     return parser.parse_args()
 
 def detect_structure(input_dir, structure_type):
@@ -253,8 +256,11 @@ def process_genomes(args):
     # 检测目录结构
     dir_structure = detect_structure(args.input, args.type)
     
-    # 创建临时工作空间
-    temp_dir = tempfile.mkdtemp(prefix="genomic_qs_")
+    # 创建临时工作空间（使用自定义临时根目录）[1,4](@ref)
+    print(f"使用临时文件根目录: {args.custom_temp_root}")
+    os.makedirs(args.custom_temp_root, exist_ok=True)  # 确保目录存在
+    temp_dir = tempfile.mkdtemp(prefix="genomic_qs_", dir=args.custom_temp_root)
+    print(f"创建临时工作空间: {temp_dir}")
     genome_dir = os.path.join(temp_dir, "genomes")
     os.makedirs(genome_dir, exist_ok=True)
     
@@ -362,6 +368,7 @@ def process_genomes(args):
     
     # 清理临时文件
     if not args.keep_temp:
+        print(f"清理临时目录: {temp_dir}")
         shutil.rmtree(temp_dir)
     
     return final_df.to_dict("records") if not final_df.empty else []
