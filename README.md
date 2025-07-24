@@ -240,6 +240,7 @@ python Genomic_QS.py -i mixed_samples/ -o results.csv -c /opt/checkmData
 2. 处理大量基因组时建议使用高线程数（如`-j 32`）
 3. 临时文件默认自动删除（保留请使用`-k`参数）
 4. 输出CSV可直接导入Excel进行进一步分析
+5. 内存一定要大，按`4`个线程`1`个`batch-szie`占用`30GB`内存计算
 
 ## 错误处理
 
