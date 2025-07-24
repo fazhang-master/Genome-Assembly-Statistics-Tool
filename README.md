@@ -246,7 +246,7 @@ python Genomic_QS.py -i mixed_samples/ -o results.csv -c /opt/checkmData
 - **未找到CheckM数据库**：通过`-c`参数指定或设置环境变量
 - **无基因组文件**：检查目录结构和文件扩展名
 - **CheckM执行失败**：检查日志中的具体错误信息
-- **属性错误**：将-j调整为4，-n调整为1
+- **属性错误**：将`-j`调整为`4`，`-n`调整为`1`
 
 ### 使用示例输出
 
