@@ -28,6 +28,7 @@ def main():
 
     # 执行核心流程
     process_files(args)
+    print(f"文件生成成功，存放在{os.path.abspath(args.output_file)}")
 
 def run_gtdbtk(task_dir, task_out, file_ext):
     """执行GTDB-Tk分类任务"""
@@ -224,7 +225,7 @@ def process_files(args):
     generate_final_csv(all_files, args.output_file, all_classifications, args.file_type)
     
     # 清理临时文件
-    if args.keep_temp == False :
+    if args.keep_temp != False :
         print(f"清理临时目录: {temp_root}")
         shutil.rmtree(temp_root)
 
