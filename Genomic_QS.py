@@ -38,8 +38,8 @@ def parse_arguments():
                         help="Genome file extension for CheckM to recognize (default: fa)")
     parser.add_argument("-j", "--threads", type=int, default=os.cpu_count(),
                         help="Number of CPU threads for CheckM")
-    parser.add_argument("-k", "--keep-temp", default="False", action="store_true",
-                        help="Keep temporary files after execution")
+    parser.add_argument("-k", "--keep-temp", default="False",
+                        help="Keep temporary files after execution (default: False)")
     parser.add_argument("-n", "--batch-size", type=int, default=0,
                         help="Number of files to process per batch (0=process all at once)")
     parser.add_argument("-r", "--custom-temp-root", default="/tmp",
@@ -403,7 +403,7 @@ def process_genomes(args):
         print("警告: 没有生成有效结果")
     
     # 清理临时文件
-    if not args.keep_temp:
+    if args.keep_temp == False:
         print(f"清理临时目录: {temp_dir}")
         shutil.rmtree(temp_dir)
     
