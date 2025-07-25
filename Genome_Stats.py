@@ -19,11 +19,11 @@ def main():
     parser = argparse.ArgumentParser(description="基因组统计与GTDB-Tk并行分类工具")
     parser.add_argument("-i", "--input-dir", required=True, help="输入目录路径")
     parser.add_argument("-o", "--output-file", default=f"Genome_Stats_{datetime.now().strftime('%Y%m%d')}.csv", help="输出CSV路径")
-    parser.add_argument("-t", "--threads", type=int, default=1, help="并行任务数(CPU核数)")
+    parser.add_argument("-j", "--threads", type=int, default=1, help="并行任务数(CPU核数)")
     parser.add_argument("-x", "--extension", default="fa", help="文件扩展名(默认:fa)")
     parser.add_argument("-k", "--keep-temp", default="False", help="保留临时文件(默认:False)")
     parser.add_argument("-r", "--temp-dir", default="/tmp", help="临时目录路径(默认:/tmp)")
-    parser.add_argument("--file-type", choices=["auto", "flat", "nested"], default="auto", help="文件组织结构")
+    parser.add_argument("-t", "--file-type", choices=["auto", "flat", "nested"], default="auto", help="文件组织结构")
     args = parser.parse_args()
 
     # 执行核心流程
