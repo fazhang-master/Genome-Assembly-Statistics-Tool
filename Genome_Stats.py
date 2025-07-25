@@ -224,7 +224,7 @@ def process_files(args):
     generate_final_csv(all_files, args.output_file, all_classifications, args.file_type)
     
     # 清理临时文件
-    if args.keep_temp != False :
+    if args.keep_temp == False :
         print(f"清理临时目录: {temp_root}")
         shutil.rmtree(temp_root)
 
