@@ -155,7 +155,7 @@ conda activate GenomicQS
 conda install pandas==2.1.3
 conda install prodigal==2.6.3 
 pip install checkm-genome==1.2.3
-conda install bioconda::hmmer==3.4
+conda install bioconda::hmmer==3.3.2
 conda install bioconda::pplacer==1.1.alpha19
 ```
 
