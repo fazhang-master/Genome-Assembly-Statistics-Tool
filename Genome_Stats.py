@@ -5,7 +5,7 @@ import gzip
 import glob
 import argparse
 import hashlib
-import shutil  # 主要使用shutil进行文件复制
+import shutil
 import csv
 import random
 import subprocess
@@ -232,7 +232,7 @@ def process_files(args):
 def generate_final_csv(file_list, output_path, classifications, file_type):
     """生成带分类结果的CSV文件"""
     with open(output_path, 'w') as f:
-        f.write("fasta_file_name,fasta_file_md5,total_size(bp),sequences,largest_seq(bp),smallest_seq(bp),N50(bp),L50,classification\n")
+        f.write("fasta_file_name,fasta_file_md5,total_size_bp,sequences,largest_seq_bp,smallest_seq_bp,N50_bp,L50,classification\n")
         
         for file_path in file_list:
             # 文件名处理
