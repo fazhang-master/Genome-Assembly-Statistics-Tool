@@ -1,0 +1,20 @@
+
+==================================================
+执行质量分布分析:
+配置文件: Genome-Assembly-Statistics-Tool/db_config.ini
+分析表名: 10GMegahitQSData
+输出路径: ./Fig/10GMegahitQSData_qs-dist.png
+图像DPI: 300
+==================================================
+
+质量类别分布统计:
+--------------------------------------------------
+  - low: 62 genomes (61.4%)
+  - near complete: 14 genomes (13.9%)
+  - high: 14 genomes (13.9%)
+  - medium: 11 genomes (10.9%)
+
+总计: 101 个基因组
+
+质量分布图已保存为 './Fig/10GMegahitQSData_qs-dist.png' (格式: png, DPI: 300)
+分析完成!

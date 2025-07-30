@@ -1,0 +1,19 @@
+
+==================================================
+执行完整性与污染分析:
+配置文件: Genome-Assembly-Statistics-Tool/db_config.ini
+分析表名: 10GMegahitQSData
+输出路径: ./Fig/10GMegahit_cple-ctam.png
+日志文件: ./Fig/10GMegahit_cple-ctam.txt
+图像DPI: 300
+==================================================
+成功获取 39 个中高质量MAGs数据
+
+质量分类统计:
+  - Near complete: 14 MAGs (35.9%)
+  - High quality: 14 MAGs (35.9%)
+  - Medium quality: 11 MAGs (28.2%)
+  - Other: 0 MAGs (0.0%)
+
+图表已保存: './Fig/10GMegahit_cple-ctam.png' (格式: png, DPI: 300)
+分析完成! 共处理 39 个中高质量MAGs

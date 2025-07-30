@@ -5,13 +5,11 @@ import gzip
 import glob
 import argparse
 import hashlib
-import shutil  # 主要使用shutil进行文件复制
+import shutil 
 import csv
 import random
 import subprocess
-import tempfile
 from datetime import datetime
-from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
 
 def main():

@@ -434,3 +434,213 @@ LIMIT 10;
 
    - 导入前自动检查CSV文件路径
    - 数据库操作后显式提交事务
+
+# 基因组数据分析工具
+
+## 概述
+
+该工具对***Mysql***统计数据进行分析做图，包括以下方面：1）**cple-ctam**：分析中高质量MAGs的完整性和污染分布；2）**qs-dist**：质量分类分布分析；3）**tax-abundance**：物种分类丰度分析；4）**key-params**：基因组关键参数比较
+
+## 依赖安装
+
+```bash
+# 激活conda环境
+conda activate GenomicQS
+
+# 安装sql及做图依赖
+pip install pysqlite3==0.5.4
+pip install sqlalchemy==2.0.41
+pip install mysql_connector_python==9.4.0
+pip install matplotlib==3.10.3
+pip install seabron==0.13.2
+```
+
+## 使用示例
+
+### 可用工具查询
+
+```python
+【In】python Analysis.py -h
+```
+
+```
+【Out】
+usage: Analysis.py [-h] {cple-ctam,qs-dist,tax-abundance,key-params} ...
+
+河海微生物基因组MAGs分析工具集
+
+options:
+  -h, --help            show this help message and exit
+
+可用工具:
+  {cple-ctam,qs-dist,tax-abundance,key-params}
+                        选择分析工具
+    cple-ctam           分析中高质量MAGs的完整性和污染分布
+    qs-dist             质量分类分布分析
+    tax-abundance       物种分类丰度分析
+    key-params          基因组关键参数比较
+```
+
+### 使用说明
+
+```
+python Analysis.py [-h] {cple-ctam,qs-dist,tax-abundance,key-params} ...
+```
+
+### 参数说明
+
+|      参数       |                描述                |
+| :-------------: | :--------------------------------: |
+|   `cple-ctam`   | 分析中高质量MAGs的完整性和污染分布 |
+|    `qs-dist`    |          质量分类分布分析          |
+| `tax-abundance` |          物种分类丰度分析          |
+|  `key-params`   |         基因组关键参数比较         |
+| `-h`, `--help`  |            显示帮助信息            |
+
+### cple-ctam工具使用说明
+
+```
+python Analysis.py cple-ctam [-h] -c CONFIG -t TABLE -p PLOT [--dpi DPI]
+```
+
+### cple-ctam参数说明
+
+|       参数       |         描述         |  默认值  |
+| :--------------: | :------------------: | :------: |
+| `-c`, `--config` |  数据库配置文件路径  | **必需** |
+| `-t`, `--table`  |  需要分析的数据表名  | **必需** |
+|  `-p`, `--plot`  | 分析图和日志保存路径 | **必需** |
+|     `--dpi`      |      图像分辨率      |  `300`   |
+|  `-h`, `--help`  |     显示帮助信息     |          |
+
+### cple-ctam使用示例
+
+#### 查看帮助信息
+
+```python
+python Analysis.py cple-ctam -h
+```
+
+#### 分析做图并保存为tiff格式
+
+```python
+python Analysis.py cple-ctam -c db_config.ini -t 10GSPAdesQSData -p ./Fig/10GSPAdes_cple-ctam.tiff
+```
+
+#### 指定分辨率
+
+```python
+python Analysis.py cple-ctam -c db_config.ini -t 10GSPAdesQSData -p ./Fig/10GSPAdes_cple-ctam.tiff --dpi 350
+```
+
+### qs-dist工具使用说明
+
+```
+python Analysis.py qs-dist [-h] -c CONFIG -t TABLE -p PLOT [--dpi DPI]
+```
+
+### qs-dist参数说明
+
+|       参数       |         描述         |  默认值  |
+| :--------------: | :------------------: | :------: |
+| `-c`, `--config` |  数据库配置文件路径  | **必需** |
+| `-t`, `--table`  |  需要分析的数据表名  | **必需** |
+|  `-p`, `--plot`  | 分析图和日志保存路径 | **必需** |
+|     `--dpi`      |      图像分辨率      |  `300`   |
+|  `-h`, `--help`  |     显示帮助信息     |          |
+
+### qs-dist使用示例
+
+#### 查看帮助信息
+
+```python
+python Analysis.py qs-dist -h
+```
+
+#### 分析做图并保存为tiff格式
+
+```python
+python Analysis.py qs-dist -c db_config.ini -t 10GSPAdesQSData -p ./Fig/10GSPAdes_qs-dist.tiff
+```
+
+#### 指定分辨率
+
+```python
+python Analysis.py qs-dist -c db_config.ini -t 10GSPAdesQSData -p ./Fig/10GSPAdes_cple-ctam.tiff --dpi 350
+```
+
+### tax-abundance工具使用说明
+
+```
+python Analysis.py tax-abundance [-h] -c CONFIG -t TABLES -p PLOT [--dpi DPI]
+```
+
+### tax-abundance参数说明
+
+|       参数       |                 描述                 |  默认值  |
+| :--------------: | :----------------------------------: | :------: |
+| `-c`, `--config` |          数据库配置文件路径          | **必需** |
+| `-t`, `--tables` | 需要分析的数据表名(多个表用逗号隔开) | **必需** |
+|  `-p`, `--plot`  |         分析图和日志保存路径         | **必需** |
+|     `--dpi`      |              图像分辨率              |  `300`   |
+|  `-h`, `--help`  |             显示帮助信息             |          |
+
+### tax-abundance使用示例
+
+#### 查看帮助信息
+
+```python
+python Analysis.py tax-abundance -h
+```
+
+#### 分析做图并保存为tiff格式
+
+```python
+python Analysis.py tax-abundance -c db_config.ini -t 10GMegahitBasicData,10GSPAdesBasicData,60GMegahitBasicData -p ./Fig/tax-abundance.tiff
+```
+
+#### 指定分辨率
+
+```python
+python Analysis.py tax-abundance -c db_config.ini -t 10GMegahitBasicData,10GSPAdesBasicData,60GMegahitBasicData -p ./Fig/tax-abundance.tiff --dpi 350
+```
+
+### key-params工具使用说明
+
+```
+python Analysis.py key-params [-h] -c CONFIG -t TABLES -p PLOT [--dpi DPI]
+```
+
+### tax-abundance参数说明
+
+|       参数       |                             描述                             |  默认值  |
+| :--------------: | :----------------------------------------------------------: | :------: |
+| `-c`, `--config` |                      数据库配置文件路径                      | **必需** |
+| `-t`, `--tables` | 需要分析的数据表名[格式: QS表.外键:关键参数表.外键 (多个用逗号分隔)] | **必需** |
+|  `-p`, `--plot`  |                     分析图和日志保存路径                     | **必需** |
+|     `--dpi`      |                          图像分辨率                          |  `300`   |
+|  `-h`, `--help`  |                         显示帮助信息                         |          |
+
+### tax-abundance使用示例
+
+#### 查看帮助信息
+
+```python
+python Analysis.py key-params -h
+```
+
+#### 分析做图并保存为tiff格式
+
+```python
+python Analysis.py key-params -c db_config.ini -t 10GMegahitQSData.fasta_file_md5:10GMegahitBasicData.fasta_file_md5,10GSPAdesQSData.fasta_file_md5:10GSPAdesBasicData.fasta_file_md5 -p ./Fig/key-params.tiff
+```
+
+#### 指定分辨率
+
+```python
+python Analysis.py key-params -c db_config.ini -t 10GMegahitQSData.fasta_file_md5:10GMegahitBasicData.fasta_file_md5,10GSPAdesQSData.fasta_file_md5:10GSPAdesBasicData.fasta_file_md5 -p ./Fig/key-params.tiff --dpi 350
+```
+
+## 使用示例输出
+
+见[example_fig](./example_fig)文件夹

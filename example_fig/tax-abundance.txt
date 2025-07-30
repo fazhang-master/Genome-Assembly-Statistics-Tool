@@ -1,0 +1,22 @@
+
+==================================================
+执行物种丰度分析:
+配置文件: Genome-Assembly-Statistics-Tool/db_config.ini
+分析表名: 10GMegahitBasicData,10GSPAdesBasicData,60GMegahitBasicData
+输出路径: ./Fig/tax-abundance.png
+图像DPI: 300
+==================================================
+
+物种分类统计:
+  - 10GMegahitBasicData:
+    Domain: 4, Phylum: 22, Class: 31
+    Order: 53, Family: 62, Genus: 59, Species: 8
+  - 10GSPAdesBasicData:
+    Domain: 4, Phylum: 22, Class: 32
+    Order: 55, Family: 64, Genus: 65, Species: 8
+  - 60GMegahitBasicData:
+    Domain: 4, Phylum: 34, Class: 52
+    Order: 100, Family: 163, Genus: 189, Species: 23
+
+物种丰度比较图已保存为 './Fig/tax-abundance.png' (格式: png, DPI: 300)
+分析完成!
